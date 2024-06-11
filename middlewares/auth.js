@@ -7,19 +7,13 @@ exports.isAuthenticated = async (req, res, next) => {
 
     if (!token) {
       return res.status(401).json({
-        message: "Please login first",
+        message: "Please log in first",
       });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    if (!decoded) {
-      return res.status(401).json({
-        message: "Invalid token",
-      });
-    }
-
-    const user = await User.findById(decoded._id);
+    const user = await User.findById(decoded.id || decoded._id);
 
     if (!user) {
       return res.status(401).json({
