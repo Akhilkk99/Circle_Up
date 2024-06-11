@@ -29,7 +29,7 @@ router.route("/userposts/:id").get(isAuthenticated,getUserPosts)
 
 router.route("/users").get(isAuthenticated,getAllUsers)
 
-router.route("/forgot/password").post(forgetPasswordtPassword)
+router.route("/forgot/password").post(forgetPassword)
 
 router.route("/password/reset/:token").put(resetPassword)
 
