@@ -31,7 +31,7 @@ router.route("/users").get(isAuthenticated,getAllUsers)
 
 router.route("/forgot/password").post(forgetPassword)
 
-router.route("/reset/password").post(resetPassword);
+router.route("/reset/password").put(resetPassword);
 
 module.exports=router
 
