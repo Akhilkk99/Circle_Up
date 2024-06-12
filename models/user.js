@@ -41,8 +41,8 @@ const userSchema = new mongoose.Schema({
       ref: "User",
     }
   ],
-  resetPasswordToken: String,
-  resetPasswordExpire: Date
+  resetPasswordOTP: String,
+  resetPasswordOTPExpire: Date
 });
 
 userSchema.pre("save", async function (next) {
@@ -62,16 +62,14 @@ userSchema.methods.generateToken = function () {
   });
 }
 
-userSchema.methods.getResetPasswordToken = function () {
-  const resetToken = crypto.randomBytes(20).toString("hex");
+// Generate and hash OTP
+userSchema.methods.getResetPasswordOTP = function () {
+  const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
 
-  this.resetPasswordToken = crypto
-    .createHash("sha256")
-    .update(resetToken)
-    .digest("hex");
-  this.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // Token expires in 10 minutes
+  this.resetPasswordOTP = crypto.createHash('sha256').update(otp).digest('hex');
+  this.resetPasswordOTPExpire = Date.now() + 5 * 60 * 1000; // OTP expires in 5 minutes
 
-  return resetToken;
+  return otp;
 };
 
-module.exports = mongoose.model("User", userSchema)
+module.exports = mongoose.model("User", userSchema);

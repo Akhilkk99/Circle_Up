@@ -349,6 +349,8 @@ exports.getAllUsers = async (req, res) => {
 };
 
 // Forget Password
+
+
 exports.forgetPassword = async (req, res) => {
   try {
     const user = await User.findOne({ email: req.body.email });
@@ -359,12 +361,10 @@ exports.forgetPassword = async (req, res) => {
       });
     }
 
-    const resetPasswordToken = user.getResetPasswordToken();
+    const otp = user.getResetPasswordOTP();
     await user.save();
 
-    const resetUrl = `${process.env.FRONTEND_URL}/password/reset/${resetPasswordToken}`;
-
-    const message = `Reset your password by clicking on the link below: \n\n${resetUrl}`;
+    const message = `Your OTP for password reset is ${otp}. It will expire in 5 minutes.`;
 
     try {
       await sendEmail({
@@ -375,16 +375,16 @@ exports.forgetPassword = async (req, res) => {
 
       res.status(200).json({
         success: true,
-        message: `Email sent to ${user.email}`,
+        message: `OTP sent to ${user.email}`,
       });
     } catch (error) {
-      user.resetPasswordToken = undefined;
-      user.resetPasswordExpire = undefined;
+      user.resetPasswordOTP = undefined;
+      user.resetPasswordOTPExpire = undefined;
       await user.save();
 
       res.status(500).json({
         success: false,
-        message: error.message,
+        message: "Email could not be sent",
       });
     }
   } catch (err) {
@@ -395,25 +395,28 @@ exports.forgetPassword = async (req, res) => {
   }
 };
 
-// Reset Password
+// Controller for resetting password with OTP
 exports.resetPassword = async (req, res) => {
   try {
-    const resetPasswordToken = crypto.createHash("sha256").update(req.params.token).digest("hex");
+    const { otp, newPassword } = req.body;
+
+    const hashedOTP = crypto.createHash("sha256").update(otp).digest("hex");
+
     const user = await User.findOne({
-      resetPasswordToken,
-      resetPasswordExpire: { $gt: Date.now() },
+      resetPasswordOTP: hashedOTP,
+      resetPasswordOTPExpire: { $gt: Date.now() },
     });
 
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: "Token is invalid or has expired",
+        message: "OTP is invalid or has expired",
       });
     }
 
-    user.password = req.body.password;
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpire = undefined;
+    user.password = newPassword;
+    user.resetPasswordOTP = undefined;
+    user.resetPasswordOTPExpire = undefined;
     await user.save();
 
     res.status(200).json({
@@ -427,6 +430,7 @@ exports.resetPassword = async (req, res) => {
     });
   }
 };
+
 
 
 exports.getMyPosts = async (req, res) => {
